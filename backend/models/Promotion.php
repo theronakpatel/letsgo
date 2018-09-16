@@ -3,6 +3,7 @@
 namespace backend\models;
 
 use Yii;
+use yii\helpers\ArrayHelper;
 
 /**
  * This is the model class for table "tbl_promotion".
@@ -18,6 +19,8 @@ use Yii;
  */
 class Promotion extends \yii\db\ActiveRecord
 {
+    public $posts;
+    public $categories;
     /**
      * @inheritdoc
      */
@@ -34,6 +37,7 @@ class Promotion extends \yii\db\ActiveRecord
         return [
             [['name', 'description'], 'required'],
             [['name', 'description'], 'string'],
+            [['posts', 'categories'], 'safe'],
             [['image'], 'required', 'on'=>'create'],
             [['image'],'file','skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg','maxSize' => 1024 * 1024 * 5,],
             [['image'], 'file','skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg','maxSize' => 1024 * 1024 * 5 ,'on'=>'update'],
@@ -75,5 +79,21 @@ class Promotion extends \yii\db\ActiveRecord
     public function getPostPromotions()
     {
         return $this->hasMany(PostPromotion::className(), ['promotion_id' => 'promotion_id']);
+    }
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function PostDropdown()
+    {
+        $postlist = Posts::find()->asArray()->all();
+        return  ArrayHelper::map($postlist, 'post_id', 'name');
+    }
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function CategoryDropdown()
+    {
+        $categorylist = Category::find()->asArray()->all();
+        return  ArrayHelper::map($categorylist, 'category_id', 'name');
     }
 }

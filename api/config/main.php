@@ -16,10 +16,6 @@ return [
         'v1' => [
             'basePath' => '@app/modules/v1',
             'class' => 'api\modules\v1\Module'
-        ],
-        'v2' => [
-            'basePath' => '@app/modules/v2',
-            'class' => 'api\modules\v2\Module'
         ]
     ],
     'components' => [        
@@ -42,7 +38,7 @@ return [
             'showScriptName' => false,
 	    'rules' => [
 			['class' => 'yii\rest\UrlRule',
-			  'controller' => ['v1/user','v1/login','v1/country','v1/category','v1/post'],
+			  'controller' => ['v1/user','v1/login','v1/country','v1/category','v1/post','v1/promotion'],
 			  'pluralize' => false,
 			  'extraPatterns' => [
                     'POST testimage' => 'testimage', // 'makelogin' refers to 'actionMakelogin'
@@ -51,6 +47,7 @@ return [
                     'POST register' => 'register', // 'register' refers to 'actionRegister'
                     'POST statelist' => 'statelist', // 'register' refers to 'actionRegister'
                     'POST per-category' => 'per-category', // 'register' refers to 'actionRegister'
+                    'POST per-post' => 'per-post', // 'register' refers to 'actionRegister'
                     'POST details' => 'details', // 'register' refers to 'actionRegister'
                     'GET list' => 'list' // 'logout' refers to 'actionLogout'
                 ],

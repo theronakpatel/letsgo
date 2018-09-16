@@ -132,6 +132,7 @@ use yii\widgets\ActiveForm;
 </div> 
 <div class="row">
     <div class="form-group col-lg-6">
+      
         <?= $form->field($model, 'image')->fileInput(['maxlength' => true]) ?>
         <?php if ($model->image != "" && file_exists(Yii::$app->params['uploadPath'].'posts/'. $model->image)){?>
             <div class="form-group col-lg-6">

@@ -3,6 +3,9 @@
 namespace backend\models;
 
 use Yii;
+use yii\helpers\ArrayHelper;
+use backend\models\Posts;
+use backend\models\Category;
 
 /**
  * This is the model class for table "tbl_post_promotion".
@@ -67,4 +70,5 @@ class PostPromotion extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Promotion::className(), ['promotion_id' => 'promotion_id']);
     }
+    
 }

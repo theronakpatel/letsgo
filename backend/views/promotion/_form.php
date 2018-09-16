@@ -19,7 +19,6 @@ use yii\widgets\ActiveForm;
         <div class="col-lg-6">
             <?= $form->field($model, 'description')->textInput(['autofocus'=>'true','placeholder'=>'Promotion description' ]) ?> 
         </div>
-        
     </div>
     
     <div class="row">
@@ -33,7 +32,36 @@ use yii\widgets\ActiveForm;
             <?php }?>
 
         </div>
-        
+    </div>
+    <hr>
+      <label style="color:red">Add Posts and Categories from below lists to which this promotion will be applied for.
+        <br>
+        If you select any category from the list, promotion will be applied for all posts of that category automatically.
+      </label>
+    <hr>
+    <div class="row">
+        <div class="col-lg-6">
+          <b>Add Posts</b> (Press CTRL key to select multiple options)
+            <?php echo $form->field($model, 'posts')
+                 ->dropDownList($model->PostDropdown(),
+                 [
+                  'multiple'=>'multiple',
+                  'style' => 'width: 50%',
+                  'class'=>'chosen-select input-md required',              
+                 ]             
+                )->label(false);  ?> 
+        </div>
+        <div class="col-lg-6">
+          <b>Add Categories</b> (Press CTRL key to select multiple options)
+            <?php echo $form->field($model, 'categories')
+                 ->dropDownList($model->CategoryDropdown(),
+                 [
+                  'multiple'=>'multiple',
+                  'style' => 'width: 50%',
+                  'class'=>'chosen-select input-md required',              
+                 ]             
+                )->label(false);  ?> 
+        </div>
     </div>
 
     <div class="form-group">

@@ -42,6 +42,8 @@ $bUrl = Yii::$app->homeUrl;
                         <section id="unseen">
                             <?= $this->render('_form', [
                               'model' => $model,
+                              'CategoryPromotionmodel' => $CategoryPromotionmodel,
+                              'PostPromotionmodel' => $PostPromotionmodel
                           ]) ?>
     
                         </section>

@@ -46,8 +46,6 @@
                     </a>
                 </li>
 
-
-
                 <li >
                     <a href="<?=$bUrl ?>posts" class="<?= ($root_val == 'posts')?'active':'' ?>">
                         <i class="fa fa-compass"></i>
@@ -55,23 +53,26 @@
                     </a>
                 </li>
 
-                <li >
-                    <a href="<?=$bUrl ?>promotion" class="<?= ($root_val == 'promotion')?'active':'' ?>">
+                <li class="sub-menu">
+                    <a href="javascript:;" class="<?= ($root_val == 'promotion')?'active':'' ?>">
                         <i class="fa fa-anchor"></i>
                         <span>Promotion Management</span>
                     </a>
+                    <ul class="sub">
+                        <li class="<?= (($root_val == 'promotion') && ($child_val == 'create'))?'active':'' ?>"><a href="<?=$bUrl ?>promotion/create" ><i class="fa fa-plus"></i>Create Promotion</a></li>
+                        <li class="<?= (($root_val == 'promotion') && ($child_val == 'index'))?'active':'' ?>"><a href="<?=$bUrl ?>promotion" ><i class="fa fa-list-ul"></i>Promotion List</a></li>
+                    </ul>
                 </li>
 
-                <li >
+                <li class="sub-menu">
                     <a href="<?=$bUrl ?>activationcode" class="<?= ($root_val == 'activationcode')?'active':'' ?>">
                         <i class="fa fa-thumbs-up"></i>
                         <span>Activationcode Management</span>
                     </a>
+                    <ul class="sub">
+                        <li class="<?= (($root_val == 'promotion') && ($child_val == 'index'))?'active':'' ?>"><a href="<?=$bUrl ?>promotion" ><i class="fa fa-list-ul"></i>Activation code List</a></li>
+                    </ul>
                 </li>
-                
-
-                
- 
 
             </ul>            
         </div>

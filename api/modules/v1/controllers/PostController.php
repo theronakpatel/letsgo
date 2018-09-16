@@ -109,7 +109,9 @@ class PostController extends ActiveController
 
                 if(sizeof($postList))
                 {
-                    $postList['image'] = Yii::$app->params['uploadURL'] . 'posts/' . $postList['image'];
+                    $imagearray = array();
+                    array_push($imagearray, Yii::$app->params['uploadURL'] . 'posts/' . $postList['image']);
+                    $postList['image'] = $imagearray;
                     $categoryname = Category::findOne(['category_id' => $postList['category_id']]);
                 	$postList['category_name'] = $categoryname->name;
 
