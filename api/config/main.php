@@ -9,7 +9,7 @@ $params = array_merge(
 
 return [
     'id' => 'app-api',
-    'name' => 'HOI Application',
+    'name' => 'Letsgo Application',
     'basePath' => dirname(__DIR__),    
     'bootstrap' => ['log'],
     'modules' => [ 
@@ -38,7 +38,7 @@ return [
             'showScriptName' => false,
 	    'rules' => [
 			['class' => 'yii\rest\UrlRule',
-			  'controller' => ['v1/user','v1/login','v1/country','v1/category','v1/post','v1/promotion'],
+			  'controller' => ['v1/user','v1/login','v1/country','v1/category','v1/post','v1/promotion','v1/merch-promotion'],
 			  'pluralize' => false,
 			  'extraPatterns' => [
                     'POST testimage' => 'testimage', // 'makelogin' refers to 'actionMakelogin'
@@ -49,6 +49,11 @@ return [
                     'POST per-category' => 'per-category', // 'register' refers to 'actionRegister'
                     'POST per-post' => 'per-post', // 'register' refers to 'actionRegister'
                     'POST details' => 'details', // 'register' refers to 'actionRegister'
+                    'POST checkactivationcode' => 'checkactivationcode', // 'register' refers to 'actionRegister'
+                    'POST redeemed' => 'redeemed', // 'register' refers to 'actionRegister'
+                    'POST activated' => 'activated', // 'register' refers to 'actionRegister'
+                    'POST updateprofile' => 'updateprofile', // 'register' refers to 'actionRegister'
+                    'POST data' => 'data', // 'register' refers to 'actionRegister'
                     'GET list' => 'list' // 'logout' refers to 'actionLogout'
                 ],
 			],

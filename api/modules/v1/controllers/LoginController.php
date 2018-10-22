@@ -5,6 +5,10 @@ use yii;
 use yii\rest\ActiveController;
 use api\modules\v1\models\Login;
 use api\modules\v1\models\User;
+use api\modules\v1\models\ForgotForm;
+use api\modules\v1\models\State;
+use api\modules\v1\models\Country;
+use backend\models\CustomerReferral;
 use yii\data\ActiveDataProvider;
 use yii\base\ErrorException;
 use yii\filters\VerbFilter;
@@ -32,8 +36,14 @@ class LoginController extends ActiveController
     	$model = new Login();
         $model->email = $email = isset($data->email)?$data->email:'';
         $model->password = $password = isset($data->password)?$data->password:'';
-        $device_type = isset($data->device_type)?$data->device_type:'';
-        $device_token = isset($data->device_token)?$data->device_token:'';
+        $model->device_type = $device_type = isset($data->device_type)?$data->device_type:'';
+        $model->device_token = $device_token = isset($data->device_token)?$data->device_token:'';
+        $model->fb_id = $fb_id = isset($data->fb_id)?$data->fb_id:'';
+        if($model->fb_id != ''){
+          $model->setScenario('fblogin');
+        }else{
+          $model->setScenario('emaillogin');
+        }
 
     	if($data){
 
@@ -43,20 +53,35 @@ class LoginController extends ActiveController
 				  	$errors = isset($errors['email'][0])?$errors['email'][0]:'';
 			  	  }else if(isset($errors['password'][0])){
 			  	  	$errors = isset($errors['password'][0])?$errors['password'][0]:'';
+			  	  }else if(isset($errors['fb_id'][0])){
+			  	  	$errors = isset($errors['fb_id'][0])?$errors['fb_id'][0]:'';
+			  	  }else if(isset($errors['device_type'][0])){
+			  	  	$errors = isset($errors['device_type'][0])?$errors['device_type'][0]:'';
+			  	  }else if(isset($errors['device_token'][0])){
+			  	  	$errors = isset($errors['device_token'][0])?$errors['device_token'][0]:'';
 			  	  }
 			    	$response = [
 			            'status' => '0',
 			            'message' => $errors,
-			            'data' =>  array(),
+			            'data' =>  (object)array(),
 			          ];	
 		    }
 		    else if ($model->validate()){
-		    	$user = Login::findOne(['email' => $email]);
+		    	if($fb_id != ''){
+					$user = Login::findOne(['fb_id' => $fb_id]);
+		    	}else{
+		    		$user = Login::findOne(['email' => $email]);
+		    	}
 		    	if($user)
 		    	{	
 		    		 $customer_id = $user->customer_id;
    	    	         $user = Login::findByID($customer_id);
-					 if($user->validatePassword($password)){
+
+   	    	         $is_validate = $user->validatePassword($password);
+   	    	         if($fb_id != ''){
+   	    	         	$is_validate = 1;
+   	    	         }
+					 if($is_validate){
 
 					 		$usermodal = new User();
 				          	$auth_key = $usermodal->getNewAuthKey();
@@ -64,6 +89,43 @@ class LoginController extends ActiveController
 		          		    $newuser = Login::find()->where(['customer_id' => $customer_id])->asArray()->one();
 		                    $newuser['auth_key'] = $auth_key;
 		                    $newuser['password_reset_token'] = '';
+		                    $newuser['city'] = (isset($newuser['city']) && $newuser['city'] != '')?$newuser['city']:'';
+		                    $newuser['state'] = (isset($newuser['state']) && $newuser['state'] != '')?$newuser['state']:'';
+		                    $newuser['state_id'] = $newuser['state'];
+
+		                    if((isset($newuser['state']) && $newuser['state'] != '')){
+		                    	$statemodal = State::findOne(['id' => $newuser['state']]);
+		                    	if($statemodal){
+		                    		$name = $statemodal->name;
+		                    	}else{
+		                    		$name = '';
+		                    	}
+		                    	$newuser['state_name'] = $name;
+		                    }else{
+			                    $newuser['state_name'] = '';
+		                    }
+
+		                    if((isset($newuser['country_id']) && $newuser['country_id'] != '')){
+		                    	$country = Country::findOne(['country_id' => $newuser['country_id']]);
+		                    	if($country){
+		                    		$name = $country->name;
+		                    	}else{
+		                    		$name = '';
+		                    	}
+		                    	$newuser['country_name'] = $name;
+		                    }else{
+			                    $newuser['country_name'] = '';
+		                    }
+		                    if($newuser['image'] != ''){
+	                            $newuser['image'] = Yii::$app->params['uploadURL'] . 'customer/' .$newuser['image'];
+	                        }
+	                        $is_referral = CustomerReferral::find()->where(['customer_id' => $customer_id])->count();
+	                        if($is_referral){
+	                        	$newuser['is_referred'] = "1";	
+	                        }else{
+	                        	$newuser['is_referred'] = "0";
+	                        }
+
 		                    $response = [
 		                                'status' => '1',
 		                                'message' => 'Login success',
@@ -74,15 +136,15 @@ class LoginController extends ActiveController
 				            $response = [
 				              'status' => '0',
 				              'message' => 'Password not matched!',
-				              'data' =>  array(),
+				              'data' =>  (object)array(),
 				            ];
 			          }	  	
 		        }
 		        else{
 		          $response = [
 		            'status' => '0',
-		            'message' => 'Email not found!',
-		            'data' =>  array(),
+		            'message' => 'User not found!',
+		            'data' =>  (object)array(),
 		          ];
 		        }
 
@@ -91,14 +153,14 @@ class LoginController extends ActiveController
 		    	$response = [
 		            'status' => '0',
 		            'message' => $errors,
-		            'data' =>  array(),
+		            'data' =>  (object)array(),
 		          ];	
 		    }
     	}else{
     		$response = [
 	            'status' => '0',
 	            'message' => 'Blank data given!',
-	            'data' =>  array(),
+	            'data' =>  (object)array(),
 	          ];
     	}
 	    echo json_encode($response,TRUE);
@@ -108,7 +170,7 @@ class LoginController extends ActiveController
             $response = [
 	            'status' => 'error',
 	            'message' => $response->getMessage(),
-	            'data' =>  array(),
+	            'data' =>  (object)array(),
 	          ];
             
 	    echo json_encode($response,TRUE);
@@ -128,12 +190,8 @@ class LoginController extends ActiveController
         $model->email = $model->email;
         $model->photo = $model->photo;
                 
-                        
-        $myfile = fopen(Yii::$app->params['uploadPath']."log/ws_log.log", "a") or die("Unable to open file!");       
-        $txt = date('Y-m-d H:i:s')." | ".$_SERVER['REMOTE_ADDR']." Input Register WS: ".json_encode($data);
-        fwrite($myfile, "\n". $txt);
-        fclose($myfile);
-//		 print_r($model->attributes);exit;
+                         
+
     	if(sizeof($data)){
     		extract($data);
 
@@ -179,7 +237,7 @@ class LoginController extends ActiveController
 		            'status' => 'error',
 		            'auth_failed' => '0',
 		            'message' => 'Phone number not found!',
-		            'data' =>  array(),
+		            'data' =>  (object)array(),
 		          ];
 		        }
 
@@ -189,7 +247,7 @@ class LoginController extends ActiveController
 		            'status' => 'error',
 		            'auth_failed' => '0',
 		            'message' => $errors,
-		            'data' =>  array(),
+		            'data' =>  (object)array(),
 		          ];	
 		    }
     	}else{
@@ -197,14 +255,11 @@ class LoginController extends ActiveController
 	            'status' => 'error',
 	            'auth_failed' => '0',
 	            'message' => 'Blank data given!',
-	            'data' =>  array(),
+	            'data' =>  (object)array(),
 	          ];
     	}
     	
-	    $myfile = fopen(Yii::$app->params['uploadPath']."log/ws_log.log", "a") or die("Unable to open file!");       
-            $txt = date('Y-m-d H:i:s')." | ".$_SERVER['REMOTE_ADDR']." Output Register WS: ".json_encode($response);
-            fwrite($myfile, "\n". $txt);
-            fclose($myfile);
+	    
 	    echo json_encode($response,TRUE);
         }
         catch (ErrorException $response)
@@ -213,7 +268,7 @@ class LoginController extends ActiveController
 	            'status' => 'error',
 	            'auth_failed' => '0',
 	            'message' => $response->getMessage(),
-	            'data' =>  array(),
+	            'data' =>  (object)array(),
 	          ];
             
 	    echo json_encode($response,TRUE);
@@ -227,141 +282,156 @@ class LoginController extends ActiveController
     {
         try
         {
-	$response = [];
-        $headers = Yii::$app->request->headers;
-        $user_id = $headers->get('user_id', '0');
-        $token = $headers->get('token','0');
-    	$data = Yii::$app->request->post();
-    	$model = new \api\modules\v1\models\ForgotForm();
-        $model->load(Yii::$app->request->post());
-        $model->attributes=Yii::$app->request->post();
-        $model->email = $model->email;
-         
-        $myfile = fopen(Yii::$app->params['uploadPath']."log/ws_log.log", "a") or die("Unable to open file!");       
-        $txt = date('Y-m-d H:i:s')." | ".$_SERVER['REMOTE_ADDR']." Input Forgotpassword WS: ".json_encode($data);
-        fwrite($myfile, "\n". $txt);
-        fclose($myfile);
+		
+			$response = [];
+	    	$data = Yii::$app->request->post();
+			$data = Yii::$app->request->getRawBody();
+			$data = json_decode($data);
 
-    	if(sizeof($data)){
-    		extract($data);
-	    	if (!$model->validate())
-                {
+	    	$model = new Login();
+	    	$user = new ForgotForm();
+	        $user->email = $email = isset($data->email)?$data->email:'';
+	    	if($user->email != ''){
+			    if (!$user->validate()){
+					    $errors = $user->errors;
+					  	if(isset($errors['email'][0])){
+					  	  		$errors = isset($errors['email'][0])?$errors['email'][0]:'';
+					  	}
+					    $response = [
+				            'status' => '0',
+				            'message' => $errors,
+				            'data' => (object)array(),
+				        ];	
+				}
+				else{
+				    	$userdata = $user->findByemail($email);
+				    	if($userdata)
+		                {
+		                    $customer_id =  $userdata['customer_id'];
 
-			      $errors = $model->errors;
-    			  // print_r($errors); exit();
-				  
-			  	  if(isset($errors['email'][0])){
-			  	  	$errors = isset($errors['email'][0])?$errors['email'][0]:'';
-			  	  }
-
-			    	$response = [
-		            'status' => 'error',
-		            'auth_failed' => '0',
-		            'message' => $errors,
-		            'data' => '',
-		          ];	
-		}
-		else if ($model->validate())
-                {
-                    
-		    	$user = \api\modules\v1\models\ForgotForm::findByemail($email);	
-		    	if(!empty($user))
-                {
-
-                	 if($user['status'] == 'I'){
-				          	$response = [
-				              'status' => 'error',
-				              'auth_failed' => '0',
-				              'message' => 'Account is inactive! Please contact admin!',
-				              'data' =>  array(),
-				            ];
-			          }
-			          else if($user['status'] == 'B'){
-				          	$response = [
-				              'status' => 'error',
-				              'auth_failed' => '0',
-				              'message' => 'Account is blocked! Please contact admin!',
-				              'data' =>  array(),
-				            ];
-			          }
-			          else if($user['status'] == 'ENV'){
-					          	$response = [
-					              'status' => 'error',
-					              'auth_failed' => '0',
-					              'message' => 'Please verify email first!',
-					              'data' =>  array(),
-					            ];
-				      }else{
-
-
-                            $user_id =  $user['user_id'];
-                            $password_reset_token = \api\modules\v1\models\Login::getPasswordSecurityToken();
-                            $id = \api\modules\v1\models\Login::updatePasswordResetToken($password_reset_token,$user_id,$email);
+		                    $password_reset_token = $user->getPasswordSecurityToken();
+		                    $user->updatePasswordResetToken($password_reset_token,$customer_id,$email);
 
 				            $response = [
 				              'status' => 'success',
 				              'message' => 'Success! Check your email for further instructions to reset password!',
-				              'data' => ""
-				            ];
-				      }
-		           
-		        }
-		        else
-                        {
-		          $response = [
-		            'status' => 'error',
-		            'auth_failed' => '0',
-		            'message' => 'Email not found!',
-		            'data' => '',
+				              'data' => (object)array()
+				            ];		           
+				        }
+				        else{
+				          $response = [
+				            'status' => '0',
+				            'message' => 'Email not found!',
+				            'data' => (object)array()
+				          ];
+				        }
+		                   
+
+				} 
+	    	}
+	        else
+	        {
+	    		$response = [
+		            'status' => '0',
+		            'message' => 'Blank data given!',
+		            'data' => (object)array()
 		          ];
-		        }
-                   
-
-		}
-        else{
-		    	 $errors = $model->errors;
-				  
-			  	  if(isset($errors['email'][0])){
-			  	  	$errors = isset($errors['email'][0])?$errors['email'][0]:'';
-			  	  }
-
-			    	$response = [
-		            'status' => 'error',
-		            'auth_failed' => '0',
-		            'message' => $errors,
-		            'data' => '',
-		          ];	
-		}	
-    	}
-        else
-        {
-    		$response = [
-	            'status' => 'error',
-	            'auth_failed' => '0',
-	            'message' => 'Blank data given!',
-	            'data' => '',
-	          ];
-    	}
-        
-        $myfile = fopen(Yii::$app->params['uploadPath']."log/ws_log.log", "a") or die("Unable to open file!");       
-        $txt = date('Y-m-d H:i:s')." | ".$_SERVER['REMOTE_ADDR']." Output Forgotpassword WS: ".json_encode($response);
-        fwrite($myfile, "\n". $txt);
-        fclose($myfile);
-        echo json_encode($response,TRUE);    
-        
+	    	}
         }
         catch (ErrorException $response)
         {
             $response = [
-                    'status' => 'error',
-                    'auth_failed' => '0',
+                    'status' => '0',
                     'message' => $response->getMessage(),
-                    'data' =>  array(),
+                    'data' =>  (object)array()
+                  ];
+
+        }
+            echo json_encode($response,TRUE);
+    }
+    
+
+    public function actionRedeemed()
+    {
+        try
+        {
+
+                $data = Yii::$app->request->getRawBody();
+                $data = json_decode($data);
+                
+                $customer_id = isset($data->customer_id)?$data->customer_id:'0';
+                $referral_code = isset($data->referral_code)?$data->referral_code:'0';
+
+                $customer_details = Login::find()->where(['customer_id' => $customer_id])->one();
+                if($customer_details){
+                	if($customer_details['referral_code'] != $referral_code){
+                		$referral_code_details = Login::find()->where(['referral_code' => $referral_code])->one();
+	                	if($referral_code_details){
+							$ref_customer_id = $referral_code_details['customer_id'];
+		                    $CustomerReferralDetails = CustomerReferral::find()->where(['ref_customer_id' => $ref_customer_id, 'customer_id' => $customer_id])->one();
+
+		                    if(!$CustomerReferralDetails)
+		                    {
+		                        $CustomerReferralModal = new CustomerReferral();
+		                        $CustomerReferralModal->ref_customer_id = $ref_customer_id; 
+		                        $CustomerReferralModal->customer_id = $customer_id; 
+		                        $CustomerReferralModal->date = date('Y-m-d H:i:s'); 
+		                        $CustomerReferralModal->save(false);
+
+		                        $referral_code_details->promotion_points = $referral_code_details->promotion_points + 50;
+		                        $referral_code_details->save(false);
+
+		                        $customer_details->promotion_points = $customer_details->promotion_points + 50;
+		                        $customer_details->save(false);
+
+		                        $response = [
+		                          'status' => '1',
+		                          'message' => 'Referral code valid! 50 points added in your account.',
+		                          'data' => (object)array(),
+		                        ];
+
+		                    }else{
+		                        $response = [
+		                            'status' => '0',
+		                            'message' => 'You have already used referral code!',
+		                            'data' =>  (object)array(),
+		                          ];                        
+		                    }
+	                		
+	                	}else{
+	                		    $response = [
+		                            'status' => '0',
+		                            'message' => 'Referral code is not valid!',
+		                            'data' =>  (object)array(),
+		                          ];                       
+	                	}
+                	}else{
+                		$response = [
+	                            'status' => '0',
+	                            'message' => 'Cannot use your own referral code!',
+	                            'data' =>  (object)array(),
+	                          ];                       
+                	}
+                }else{
+
+                    $response = [
+                        'status' => '0',
+                        'message' => 'Customer is not valid!',
+                        'data' =>  (object)array(),
+                      ];
+                }
+                echo json_encode($response,TRUE);
+        }
+        catch (ErrorException $response)
+        {
+            $response = [
+                    'status' => '0',
+                    'message' => $response->getMessage(),
+                    'data' =>  (object)array(),
                   ];
 
             echo json_encode($response,TRUE);
         }
     }
-    
     
 }

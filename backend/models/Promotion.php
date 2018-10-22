@@ -21,6 +21,7 @@ class Promotion extends \yii\db\ActiveRecord
 {
     public $posts;
     public $categories;
+    public $total_activationcodes;
     /**
      * @inheritdoc
      */
@@ -35,9 +36,13 @@ class Promotion extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['name', 'description'], 'required'],
-            [['name', 'description'], 'string'],
-            [['posts', 'categories'], 'safe'],
+            [['name', 'description','promotion_points'], 'required'],
+            [['name', 'description','merchant_code'], 'string'],
+            [['merchant_code'], 'string', 'max' => 6],
+            // [['merchant_code'],'unique'],
+            [['promotion_points'], 'number', 'min' => 0, 'max' => 1000],
+            [['total_activationcodes'], 'number', 'min' => 1, 'max' => 100],
+            [['posts', 'categories','total_activationcodes'], 'safe'],
             [['image'], 'required', 'on'=>'create'],
             [['image'],'file','skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg','maxSize' => 1024 * 1024 * 5,],
             [['image'], 'file','skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg','maxSize' => 1024 * 1024 * 5 ,'on'=>'update'],
@@ -52,8 +57,10 @@ class Promotion extends \yii\db\ActiveRecord
         return [
             'promotion_id' => 'Promotion ID',
             'name' => 'Name',
+            'merchant_code' => 'Merchant Activation Code',
             'description' => 'Description',
             'image' => 'Image',
+            'total_activationcodes' => 'Total no. of Activation codes to generate',
         ];
     }
 

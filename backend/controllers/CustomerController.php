@@ -5,6 +5,9 @@ namespace backend\controllers;
 use Yii;
 use backend\models\Customer;
 use backend\models\CustomerSearch;
+use backend\models\Posts;
+use backend\models\CustomerActivatationSearch;
+use backend\models\CustomerMerchActivatationSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -39,6 +42,69 @@ class CustomerController extends Controller
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    /**
+     * Lists all Customer models.
+     * @return mixed
+     */
+    public function actionActivation()
+    {
+        $searchModel = new CustomerActivatationSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+
+        return $this->render('activation', [
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+    /**
+     * send customer notificaion
+     * @return mixed
+     */
+    public function actionCustomnotification()
+    {
+        $model = new Customer();
+        $model->scenario = 'notification';
+        if ($model->load(Yii::$app->request->post())) {
+            $customerData  =  Customer::find()->asArray()->all();
+            foreach ($customerData as $key => $value) {
+              $device_type = $value['device_type'];
+              $device_token = $value['device_token'];
+                $title = $model->message;
+                $param = '';
+                $model1 = new Posts();
+                $device = isset($model->device)?$model->device:'all';
+                if(($device == 'all' || $device == 'android')  && $device_type == '1'){
+                  $model1->sendAndroidNotification($device_token, $param, $title, 3,0,0);
+                }                
+                if(($device == 'all' || $device == 'ios')  && $device_type == '2'){
+                  $model1->sendIosNotification($device_token, $param, $title, 3,0,0);
+                }
+            }
+            
+            Yii::$app->session->setFlash('success', 'Notification sent Successfully');
+            return $this->redirect(['customnotification']);
+
+        } else {
+            return $this->render('create', [
+                'model' => $model
+            ]);
+        }
+    }
+    /**
+     * Lists all Customer models.
+     * @return mixed
+     */
+    public function actionMerchActivation()
+    {
+        $searchModel = new CustomerMerchActivatationSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+
+        return $this->render('merch-activation', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
         ]);

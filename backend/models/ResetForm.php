@@ -24,7 +24,7 @@ class ResetForm extends \yii\db\ActiveRecord
     
     public static function tableName()
     {
-        return 'hoi_admin';
+        return 'tbl_customer';
     }
 
 
@@ -73,7 +73,7 @@ class ResetForm extends \yii\db\ActiveRecord
       $query->select([
                       '*',
                      ])
-        ->from('hoi_admin')
+        ->from('tbl_customer')
         ->where([
               "password_reset_token" => $token
               

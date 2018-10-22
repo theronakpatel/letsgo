@@ -129,17 +129,23 @@ use yii\widgets\ActiveForm;
     <div class="form-group col-lg-3">
             <?= $form->field($model, 'longitude')->textInput() ?>
     </div>
+    <div class="form-group col-lg-6">
+            <?= $form->field($model, 'ph_No')->textInput() ?>
+    </div>
 </div> 
 <div class="row">
-    <div class="form-group col-lg-6">
-      
-        <?= $form->field($model, 'image')->fileInput(['maxlength' => true]) ?>
-        <?php if ($model->image != "" && file_exists(Yii::$app->params['uploadPath'].'posts/'. $model->image)){?>
-            <div class="form-group col-lg-6">
-        Old File: 
-           <img src="<?=Yii::$app->params['uploadURL'] ?>posts/<?= $model['image'] ?>" class="img_delete play-media-modal" data-val="<?=Yii::$app->params['uploadURL'] ?>posts/<?= $model['image'] ?>">
+    <div class="form-group col-lg-12">
+        <label style="color:red">Press CTRL key to select multiple files.</label>
+        <?= $form->field($model, 'files[]')->fileInput(['multiple' => true]) ?>
+        <?php foreach ($multipleImages as $key => $value) {
+            if ($value['image'] != "" && file_exists(Yii::$app->params['uploadPath'].'posts/'. $value['image'])){ ?>
+             <div class="form-group col-lg-1" style="">
+              <img src="<?=Yii::$app->params['uploadURL'] ?>posts/<?= $value['image'] ?>" class="img_delete play-media-modal" data-val="<?=Yii::$app->params['uploadURL'] ?>posts/<?= $value['image'] ?>">
+              <a href="deleteimage?id=<?= $value['post_image_id'] ?>" class="btn btn-xs btn-danger"
+              data-method="post" data-confirm = 'Are you sure you want to delete image permanently?' style="position: absolute;top: 0;right: 8px;" title="Click here to remove image">X</a>
             </div>
-        <?php }?>
+        <?php  } } ?>
+           
 
     </div>    
 </div>

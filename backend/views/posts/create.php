@@ -43,6 +43,7 @@ $bUrl = Yii::$app->homeUrl;
                             <?= $this->render('_form', [
                               'model' => $model,
                               'categories' => $categories,
+                              'multipleImages' => $multipleImages
                           ]) ?>
     
                         </section>

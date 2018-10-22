@@ -19,7 +19,7 @@ class PromotionSearch extends Promotion
     {
         return [
             [['promotion_id'], 'integer'],
-            [['name', 'description', 'image'], 'safe'],
+            [['name', 'description', 'image','promotion_points','merchant_code'], 'safe'],
         ];
     }
 
@@ -64,6 +64,8 @@ class PromotionSearch extends Promotion
 
         $query->andFilterWhere(['like', 'name', $this->name])
             ->andFilterWhere(['like', 'description', $this->description])
+            ->andFilterWhere(['like', 'merchant_code', $this->merchant_code])
+            ->andFilterWhere(['=', 'promotion_points', $this->promotion_points])
             ->andFilterWhere(['like', 'image', $this->image]);
 
         return $dataProvider;

@@ -9,6 +9,13 @@ use backend\models\LoginForm;
 use backend\models\ContactForm;
 use backend\models\ResetForm;
 use backend\models\Dashboard;
+use backend\models\Customer;
+use backend\models\Posts;
+use backend\models\Category;
+use backend\models\CustomerActivatation;
+use backend\models\Promotion;
+use backend\models\MerchPromotion;
+use backend\models\CustomerMerchActivatation;
 date_default_timezone_set("UTC"); 
 
 class SiteController extends Controller
@@ -83,23 +90,23 @@ class SiteController extends Controller
 
         if (!Yii::$app->user->isGuest) {
             $model = new Dashboard();
-           // $user_count = \backend\models\User::find()->where(["app_type" => 'M','status' => 'A'])->count();
-           // $city_count = \backend\models\City::find()->where(['status' => 'active'])->count();
-           // $tour_count = \backend\models\Tour::find()->where(['status' => 'active'])->count();
-           // $location_count = \backend\models\Location::find()->where(['status' => 'active'])->count();
-
-/*           $city_count = \backend\models\City::find()->count();
-           $tour_count = \backend\models\Tour::find()->count();
-           $location_count = \backend\models\Location::find()->count();*/
-
-
+            $user_count = Customer::find()->count();
+            $category_count = Category::find()->count();
+            $posts_count = Posts::find()->count();
+            $activation_count = CustomerActivatation::find()->count();
+            $promotion_count = Promotion::find()->count();
+            $merch_promotion_count = MerchPromotion::find()->count();
+            $merch_activation_count = CustomerMerchActivatation::find()->count();
 
             return $this->render('index', [
                 'model' => $model,
-        /*        'user_count' => $user_count,
-        		'city_count' => $city_count,
-        		'tour_count' => $tour_count,
-        		'location_count' => $location_count,*/
+        		'user_count' => $user_count,
+        		'category_count' => $category_count,
+                'posts_count' => $posts_count,
+                'promotion_count' => $promotion_count,
+                'merch_promotion_count' => $merch_promotion_count,
+                'merch_activation_count' => $merch_activation_count,
+        		'activation_count' => $activation_count
             ]);
             
         }else{

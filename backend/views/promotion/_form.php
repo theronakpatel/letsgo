@@ -19,6 +19,7 @@ use yii\widgets\ActiveForm;
         <div class="col-lg-6">
             <?= $form->field($model, 'description')->textInput(['autofocus'=>'true','placeholder'=>'Promotion description' ]) ?> 
         </div>
+        
     </div>
     
     <div class="row">
@@ -30,15 +31,17 @@ use yii\widgets\ActiveForm;
 	           <img src="<?=Yii::$app->params['uploadURL'] ?>promotion/<?= $model['image'] ?>" class="img_delete play-media-modal" data-val="<?=Yii::$app->params['uploadURL'] ?>promotion/<?= $model['image'] ?>">
                 </div>
             <?php }?>
-
+        </div>
+        <div class="col-lg-6">
+            <?= $form->field($model, 'promotion_points')->textInput(['autofocus'=>'true','placeholder'=>'Promotion Points' ]) ?> 
         </div>
     </div>
     <hr>
       <label style="color:red">Add Posts and Categories from below lists to which this promotion will be applied for.
-        <br>
-        If you select any category from the list, promotion will be applied for all posts of that category automatically.
+        <!-- <br> -->
+        <!-- If you select any category from the list, promotion will be applied for all posts of that category automatically. -->
       </label>
-    <hr>
+    <br>
     <div class="row">
         <div class="col-lg-6">
           <b>Add Posts</b> (Press CTRL key to select multiple options)
@@ -63,6 +66,21 @@ use yii\widgets\ActiveForm;
                 )->label(false);  ?> 
         </div>
     </div>
+
+    <?php // if($model->isNewRecord){ ?>
+      <hr>
+        <div class="row">
+          <div class="col-lg-3">
+            <?= $form->field($promotionActivationcodeModal, 'activation_code')->textInput(['autofocus'=>'true','placeholder'=>'Activation code' ]) ?> 
+          </div>
+          <!-- <div class="col-lg-3"> -->
+            <?php // echo $form->field($model, 'merchant_code')->textInput(['autofocus'=>'true','placeholder' => 'Merchant Activation code']) ?> 
+          <!-- </div> -->
+        </div>
+        <!-- <label style="color:red">
+          Please insert number of activation codes (max 100) you want to generate automatically. Once activation codes will be generated it cannot be changed.
+        </label> -->
+    <?php // } ?>
 
     <div class="form-group">
         <?= Html::submitButton($model->isNewRecord ? 'Create' : 'Update', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-success']) ?>

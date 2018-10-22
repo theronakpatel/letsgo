@@ -62,7 +62,7 @@ $bUrl = Yii::$app->homeUrl;
                                 'address',
                                 'latitude',
                                 'longitude',
-                                // 'image',
+                                'ph_No',
                                 // 'added_date',
                                 [
                                             'header'=>'Actions',

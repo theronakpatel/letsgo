@@ -54,7 +54,7 @@ class CategoryController extends ActiveController
                         $response = [
                             'status' => '0',
                             'message' => 'No Category Found',
-                            'data' =>  array(),
+                            'data' =>  (object)array()
                           ];
                 }
                 echo json_encode($response,TRUE);
@@ -64,7 +64,7 @@ class CategoryController extends ActiveController
             $response = [
                     'status' => '0',
                     'message' => $response->getMessage(),
-                    'data' =>  array(),
+                    'data' =>  (object)array()
                   ];
 
             echo json_encode($response,TRUE);

@@ -41,8 +41,14 @@ $baseUrl = $asset->baseUrl;
     <?php $this->head() ?>
 
     <style>
+    .mini-stat-icon{
+      font-size: 20px;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    }
     .mini-stat-info span {
-        font-size: 22px !important;
+        font-size: 16px !important;
     }
     .mini-stat{
       padding: 10px !important;

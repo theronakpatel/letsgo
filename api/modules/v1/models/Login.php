@@ -52,8 +52,11 @@ class Login extends ActiveRecord implements IdentityInterface
     public function rules()
     {
         return [
-            [['password', 'email'], 'required'],
+            [['password', 'email','device_type','device_token'], 'required', 'on' => 'emaillogin'],
+            [['fb_id','device_type','device_token'], 'required', 'on' => 'fblogin'],
             [['device_token'], 'string'],
+            [['referral_code','image'], 'string'],
+            [['promotion_points','fb_id'], 'safe'],
             [['email','phone','password','device_token','password_reset_token'],'safe'],
             [['email'], 'email','message'=>"The email isn't correct"],
         ];
@@ -178,6 +181,11 @@ class Login extends ActiveRecord implements IdentityInterface
     public static function findByID($customer_id)
     {
         return static::findOne(['customer_id' => $customer_id]);
+    }
+    
+    public static function findByFBID($fb_id)
+    {
+        return static::findOne(['fb_id' => $fb_id]);
     }
     
 
@@ -326,9 +334,9 @@ class Login extends ActiveRecord implements IdentityInterface
               ['html' => 'passwordResetToken-html'],
               ['password_reset_token' => $password_reset_token]
             )
-            ->setFrom(['priyanka.sah@ecosmob.com'])
+            ->setFrom(['eronax59@gmail.com'])
             ->setTo($email)
-            ->setSubject('Password reset for ' . Yii::$app->name)
+            ->setSubject('Password reset request')
             ->send();
             
 

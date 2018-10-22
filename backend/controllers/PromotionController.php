@@ -6,6 +6,8 @@ use Yii;
 use backend\models\Promotion;
 use backend\models\PromotionSearch;
 use backend\models\PostPromotion;
+use backend\models\PromotionActivationcode;
+use backend\models\PromotionActivationcodeSearch;
 use backend\models\CategoryPromotion;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -47,6 +49,21 @@ class PromotionController extends Controller
     }
 
     /**
+     * Lists all Promotion models.
+     * @return mixed
+     */
+    public function actionShowpromo($id)
+    {
+        $searchModel = new PromotionActivationcodeSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams,$id);
+
+        return $this->render('showpromo', [
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    /**
      * Displays a single Promotion model.
      * @param integer $id
      * @return mixed
@@ -68,19 +85,21 @@ class PromotionController extends Controller
         $model = new Promotion();
         $PostPromotionmodel = new PostPromotion();
         $CategoryPromotionmodel = new CategoryPromotion();
+        $promotionActivationcodeModal = new PromotionActivationcode();
         $model->scenario = 'create';
 
         $model->posts = array();
         $model->categories = array();
 
-        if ($model->load(Yii::$app->request->post()) ) {
+
+        if ($model->load(Yii::$app->request->post()) && $promotionActivationcodeModal->load(Yii::$app->request->post()) ) {
             
             $model->image = UploadedFile::getInstance($model, 'image');
             if ($model->validate())
             {       
                     if($model->image != '')
                     {
-                        $image = $model->image->baseName . '.' . $model->image->extension;
+                        $image = time() . '.' . $model->image->extension;
                         $model->image->saveAs(Yii::$app->params['uploadPath'] . 'promotion/' . $image);                        
                         $model->image = $image;
                     }
@@ -89,9 +108,14 @@ class PromotionController extends Controller
             {
               return $this->render('create', [
                     'model' => $model,
+                    'PostPromotionmodel' => $PostPromotionmodel,
+                    'CategoryPromotionmodel' => $CategoryPromotionmodel,
+                    'promotionActivationcodeModal' => $promotionActivationcodeModal,
               ]);
             }
             $model->save(false);
+            $promotionActivationcodeModal->promotion_id = $model->promotion_id;
+            $promotionActivationcodeModal->save(false);
             
             $post_ids = $model->posts;
             if($post_ids){
@@ -115,7 +139,19 @@ class PromotionController extends Controller
                     $promotionmodal->save(false);
                 }    
             }
+            /*$total_activationcodes = $model->total_activationcodes;
 
+            for ($i=0; $i < $total_activationcodes ; $i++) {
+                $length = 8;
+                $promocode1 = substr(str_shuffle(str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 5)), 0, 12);
+                $promocode3 = substr(str_shuffle(str_repeat('0123456789', 5)), 0, 12);
+                $promocode = substr(str_shuffle($promocode1 . $promocode3), 0, 6);
+
+                $pmc = new PromotionActivationcode;
+                $pmc->promotion_id = $model->promotion_id;
+                $pmc->activation_code = $promocode;
+                $pmc->save(false);
+            }*/
             Yii::$app->session->setFlash('success', 'Promotion Created Successfully');
             return $this->redirect(['index']);
 
@@ -124,6 +160,7 @@ class PromotionController extends Controller
                 'model' => $model,
                 'PostPromotionmodel' => $PostPromotionmodel,
                 'CategoryPromotionmodel' => $CategoryPromotionmodel,
+                'promotionActivationcodeModal' => $promotionActivationcodeModal,
             ]);
         }
     }
@@ -137,10 +174,10 @@ class PromotionController extends Controller
     public function actionUpdate($id)
     {
        
-       $model = $this->findModel($id);
+       $model = $old_data = $this->findModel($id);
        $PostPromotionmodel = PostPromotion::find()->where(['promotion_id' => $model->promotion_id])->asArray()->all();
        $CategoryPromotionmodel = CategoryPromotion::find()->where(['promotion_id' => $model->promotion_id])->asArray()->all();
-
+       $promotionActivationcodeModal = PromotionActivationcode::findOne(['promotion_id' => $model->promotion_id]);
        $model->posts = array_column($PostPromotionmodel,"post_id");
        $model->categories = array_column($CategoryPromotionmodel,"category_id");
 
@@ -148,7 +185,7 @@ class PromotionController extends Controller
        $CategoryPromotionmodel = new CategoryPromotion();*/
 
        $model->scenario = 'update';
-        if ($model->load(Yii::$app->request->post()) ) {
+        if ($model->load(Yii::$app->request->post()) && $promotionActivationcodeModal->load(Yii::$app->request->post()) ) {
 
             $model->image = UploadedFile::getInstance($model, 'image');
             
@@ -167,7 +204,8 @@ class PromotionController extends Controller
                             if(file_exists($oldFile))
                                 unlink($oldFile);
                             }
-                            $image = $model->image->baseName . '.' . $model->image->extension;
+                            $image = $model->promotion_id.'_'.time() . '.' . $model->image->extension;
+                            // $image = $model->image->baseName . '.' . $model->image->extension;
                             $model->image->saveAs(Yii::$app->params['uploadPath'] . 'promotion/' . $image);                        
                             $model->image = $image;
                          }
@@ -179,6 +217,7 @@ class PromotionController extends Controller
                 unset($model->image);
             }
             $model->save(false);
+            $promotionActivationcodeModal->save(false);
             PostPromotion::deleteAll(['promotion_id' => $model->promotion_id]);
             $post_ids = $model->posts;
             if($post_ids){
@@ -212,6 +251,7 @@ class PromotionController extends Controller
                 'model' => $model,
                 'PostPromotionmodel' => $PostPromotionmodel,
                 'CategoryPromotionmodel' => $CategoryPromotionmodel,
+                'promotionActivationcodeModal' => $promotionActivationcodeModal,
             ]);
         }
     }

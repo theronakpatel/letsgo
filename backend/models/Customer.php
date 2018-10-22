@@ -22,6 +22,8 @@ use Yii;
  */
 class Customer extends \yii\db\ActiveRecord
 {
+    public $message;
+    public $device;
     /**
      * @inheritdoc
      */
@@ -36,10 +38,12 @@ class Customer extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['name', 'email', 'password', 'password_reset_token', 'country_id', 'device_token', 'register_date'], 'required'],
-            [['name', 'device_type', 'device_token'], 'string'],
+            [[ 'message','device'], 'required', 'on' => 'notification'],
+            [[ 'message'], 'string', 'max' => 150],
+            [['name', 'email', 'password', 'password_reset_token', 'country_id', 'device_token', 'register_date'], 'safe'],
+            [['name', 'device_type', 'device_token','referral_code'], 'string'],
             [[ 'country_id'], 'integer'],
-            [['register_date'], 'safe'],
+            [['register_date','promotion_points'], 'safe'],
             [['email', 'password', 'password_reset_token'], 'string', 'max' => 255],
             [['country_id'], 'exist', 'skipOnError' => true, 'targetClass' => Countries::className(), 'targetAttribute' => ['country_id' => 'country_id']],
         ];

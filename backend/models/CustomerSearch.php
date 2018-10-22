@@ -18,8 +18,8 @@ class CustomerSearch extends Customer
     public function rules()
     {
         return [
-            [['customer_id', 'country_id'], 'integer'],
-            [['name', 'email', 'password', 'password_reset_token', 'device_type', 'device_token', 'register_date'], 'safe'],
+            [['customer_id', 'country_id','promotion_points'], 'integer'],
+            [['name', 'email', 'password', 'password_reset_token','referral_code', 'device_type', 'device_token', 'register_date'], 'safe'],
         ];
     }
 
@@ -61,11 +61,13 @@ class CustomerSearch extends Customer
         $query->andFilterWhere([
             'customer_id' => $this->customer_id,
             'country_id' => $this->country_id,
+            'promotion_points' => $this->promotion_points,
             'register_date' => $this->register_date,
         ]);
 
         $query->andFilterWhere(['like', 'name', $this->name])
             ->andFilterWhere(['like', 'email', $this->email])
+            ->andFilterWhere(['like', 'referral_code', $this->referral_code])
             ->andFilterWhere(['like', 'password', $this->password])
             ->andFilterWhere(['like', 'password_reset_token', $this->password_reset_token])
             ->andFilterWhere(['like', 'device_type', $this->device_type])

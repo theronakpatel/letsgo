@@ -54,11 +54,15 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules()
     {
         return [
-            [['name','email','password'], 'required'],
+            [['name','email','password','device_type','device_token'], 'required', 'on' => 'emaillogin'],
+            [['fb_id','device_type','device_token'], 'required', 'on' => 'fblogin'],
+            [['customer_id'], 'required', 'on' => 'customerupdate'],
             [['password'], 'string', 'min' => 6],
-            [['password','password_reset_token','country_id','city','state','device_type','device_token','register_date'],'safe'],
+            [['referral_code','image'], 'string'],
+            [['password','password_reset_token','country_id','city','state','register_date'],'safe'],
             [['email'], 'email','message'=>"The email isn't correct"],
-            ['email', 'unique'],
+            [['email'], 'unique'],
+            [['fb_id'], 'unique','message'=>"Facebook User is already register. Please login."],
         ];
     }
     

@@ -20,7 +20,7 @@ class PostsSearch extends Posts
     {
         return [
             [['post_id', 'category_id'], 'integer'],
-            [['name', 'description','category_name', 'address', 'image', 'added_date'], 'safe'],
+            [['name', 'description','category_name', 'ph_No','address', 'image', 'added_date'], 'safe'],
             [['latitude', 'longitude'], 'number'],
         ];
     }
@@ -73,6 +73,7 @@ class PostsSearch extends Posts
         $query->andFilterWhere(['like', 'name', $this->name])
             ->andFilterWhere(['like', 'tbl_category.name', $this->category_name])
             ->andFilterWhere(['like', 'description', $this->description])
+            ->andFilterWhere(['like', 'ph_No', $this->ph_No])
             ->andFilterWhere(['like', 'address', $this->address])
             ->andFilterWhere(['like', 'image', $this->image]);
 

@@ -69,6 +69,8 @@ $bUrl = Yii::$app->homeUrl;
                                 'columns' => [
                                         'name',
                                         'description',
+                                        'promotion_points',
+                                        // 'merchant_code',
                                         [
                                             'attribute' => 'image',
                                             'format' => 'raw',
@@ -87,6 +89,42 @@ $bUrl = Yii::$app->homeUrl;
                                             'contentOptions' => ['style' => 'max-width:50px !important;'],
                                             'headerOptions' => ['style' => 'max-width:50px !important;'],
                                         ],
+                                        /*[
+                                        'class' => 'yii\grid\ActionColumn',
+                                        'template' => ' {showpromo}  {update}   {delete}  ',
+                                        'header' => Yii::t('app', 'Actions'),
+                                        'headerOptions' => ['style' => 'width: 300px'],
+                                        'contentOptions' => ['style' => 'min-width:100px;'],
+                                        'buttons' => [
+                                             
+                                            'showpromo' => function ($url, $model) {
+                                                    return (1 ? Html::a('Show Activation Codes',
+                                                        $url, [
+                                                            'title' => Yii::t('app', 'Show Activation Codes'),
+                                                            'data-pjax' => 0,
+                                                            'class' => 'btn-sm btn btn-success',
+                                                        ]) : '');
+                                            },
+                                            'update' => function ($url, $model) {
+                                                    return (1 ? Html::a('<i class="fa fa-pencil" style="font-size: 14px;margin: 2px;"></i>',
+                                                        $url, [
+                                                            'title' => Yii::t('app', 'update'),
+                                                            'data-pjax' => 0,
+                                                            'class' => 'btn-sm btn btn-primary ',
+                                                        ]) : '');
+                                            },
+                                            'delete' => function ($url, $model) {
+                                                    return (1 ? Html::a('<i class="fa fa-trash" style="font-size: 14px;margin: 2px;"></i>',
+                                                        $url, [
+                                                            'title' => Yii::t('app', 'delete'),
+                                                            'id' => 'delete-opn',
+                                                            "data-method"=>"post",
+                                                            'data-confirm' => Yii::t('app', 'Are you sure you want to delete this '.$model->getAttributeLabel('module_name').'?'),
+                                                            'class' => 'btn-sm btn btn-danger ',
+                                                        ]) : '');
+                                            },
+                                        ],
+                                    ],*/
 
                                     ],
                             ]);

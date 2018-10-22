@@ -52,6 +52,7 @@ $bUrl = Yii::$app->homeUrl;
 
                                 'name',
                                 'email',
+                                'promotion_points',
                                  [
                                     'attribute' => 'device_type',
                                     'format' => 'raw',
@@ -66,8 +67,8 @@ $bUrl = Yii::$app->homeUrl;
                                             : "<button class='btn btn-danger'>iOS</button>";
                                     },
                                 ],
-
-                                // 'device_token:ntext',
+                                // 'device_token',
+                                'referral_code',
                                 'register_date',
 
                                 // ['class' => 'yii\grid\ActionColumn'],

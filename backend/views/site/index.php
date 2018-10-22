@@ -47,6 +47,94 @@ $baseUrl = $asset->baseUrl;
  
 <div class="row">
  	
- 	
+ 	<div class="col-md-3">
+        <a href="customer">
+        <div class="mini-stat clearfix">
+            <span class="mini-stat-icon tar"><?=$user_count ?></span>
+            <div class="mini-stat-info">
+            	<div style="padding: 3px;"></div>
+                <span>Customers</span> 
+            </div>
+        </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="category">
+        <div class="mini-stat clearfix">
+            <span class="mini-stat-icon tar"><?=$category_count ?></span>
+            <div class="mini-stat-info">
+            	<div style="padding: 3px;"></div>
+                <span>Categories</span> 
+            </div>
+        </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="posts">
+        <div class="mini-stat clearfix">
+            <span class="mini-stat-icon tar"><?=$posts_count ?></span>
+            <div class="mini-stat-info">
+                <div style="padding: 3px;"></div>
+                <span>Posts</span>
+            </div>
+        </div>
+        </a>
+    </div> 
+    <div class="col-md-3">
+        <a href="promotion">
+        <div class="mini-stat clearfix">
+            <span class="mini-stat-icon tar"><?=$promotion_count ?></span>
+            <div class="mini-stat-info">
+                <div style="padding: 3px;"></div>
+                <span>Promotions</span>
+            </div>
+        </div>
+        </a>
+    </div> 
+    <div class="col-md-3">
+        <a href="merch-promotion">
+        <div class="mini-stat clearfix">
+            <span class="mini-stat-icon tar"><?=$merch_promotion_count ?></span>
+            <div class="mini-stat-info">
+                <div style="padding: 3px;"></div>
+                <span>Merchant Promotions</span>
+            </div>
+        </div>
+        </a>
+    </div> 
+    <div class="col-md-3">
+        <a href="customer/activation">
+        <div class="mini-stat clearfix">
+            <span class="mini-stat-icon tar"><?=$activation_count ?></span>
+            <div class="mini-stat-info">
+                <div style="padding: 3px;"></div>
+                <span>Customer Activation</span>
+            </div>
+        </div>
+        </a>
+    </div> 
+    <div class="col-md-3">
+        <a href="customer/merch-activation">
+        <div class="mini-stat clearfix">
+            <span class="mini-stat-icon tar"><?=$merch_activation_count ?></span>
+            <div class="mini-stat-info">
+                <div style="padding: 3px;"></div>
+                <span>Merchantcode Activation</span>
+            </div>
+        </div>
+        </a>
+    </div> 
+    <div class="row">
+        <div class="col-md-3">
+            <a href="customer/customnotification">
+            <div class="mini-stat clearfix">
+                <div class="mini-stat-info">
+                	<div style="padding: 8px;"></div>
+                    <span>Send Custom Notification</span>
+                </div>
+            </div>
+            </a>
+        </div>
+    </div> 
 </div>
 

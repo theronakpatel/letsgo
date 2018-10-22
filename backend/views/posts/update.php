@@ -30,7 +30,7 @@ $bUrl = Yii::$app->homeUrl;
                     </header>
                     <div class="panel-body">
                      <?php if(Yii::$app->getSession()->getFlash('success') != ''){ ?>
-                      <div class="col-md-6 col-sm-6 col-xs-6 no-padding">
+                      <div class="col-lg-12 no-padding">
                           <div class="alert alert-success alert-dismissible fade in" role="alert">
                             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span>
                             </button>
@@ -43,6 +43,7 @@ $bUrl = Yii::$app->homeUrl;
                             <?= $this->render('_form', [
                               'model' => $model,
                               'categories' => $categories,
+                              'multipleImages' => $multipleImages
                           ]) ?>
     
                         </section>

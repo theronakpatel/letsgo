@@ -9,6 +9,10 @@ use api\modules\v1\models\Tour;
 use api\modules\v1\models\Referrel;
 use api\modules\v1\models\PaymentHistory;
 use api\modules\v1\models\PurchaseTours;
+use api\modules\v1\models\State;
+use api\modules\v1\models\Country;
+use backend\models\CustomerReferral;
+
 use yii\data\ActiveDataProvider;
 use yii\web\UploadedFile;
 date_default_timezone_set("UTC"); 
@@ -40,10 +44,27 @@ class UserController extends ActiveController
                 $model->country_id = isset($data->country_id)?$data->country_id:'';
                 $model->device_type = $device_type = isset($data->device_type)?$data->device_type:'';
                 $model->device_token = $device_token = isset($data->device_token)?$data->device_token:'';
-                $model->state = $state = isset($data->state)?$data->state:'';
+                $model->state = $state = isset($data->state)?$data->state:(isset($data->state_id)?$data->state_id:'');
                 $model->city = $city = isset($data->city)?$data->city:'';
+                $model->fb_id = $fb_id = isset($data->fb_id)?$data->fb_id:'';
 
+                $referral_code1 = substr(str_shuffle(str_repeat('ABCDEFGHJKMNPQRSTUVWXYZ', 5)), 0, 3);
+                $referral_code2 = substr(str_shuffle(str_repeat('abcdefghjkmnpqrstuvwxyz', 5)), 0, 3);
+                $referral_code3 = substr(str_shuffle(str_repeat('123456789', 5)), 0, 3);
+                $referral_code = substr(str_shuffle($referral_code1 . $referral_code2 . $referral_code3 ), 0, 6);
+                $Usermodel = User::findOne(['referral_code' => $referral_code]);
+                if(!$Usermodel){
+                  $model->referral_code = $referral_code;  
+                }else{
+                  $model->referral_code = $referral_code = time();
+                }
+                
 
+                if($model->fb_id != ''){
+                  $model->setScenario('fblogin');
+                }else{
+                  $model->setScenario('emaillogin');
+                }
                 if($data)
                 {
                     if (!$model->validate()){
@@ -54,11 +75,20 @@ class UserController extends ActiveController
                             $errors = isset($errors['email'][0])?$errors['email'][0]:'';
                           }else if(isset($errors['password'][0])){
                             $errors = isset($errors['password'][0])?$errors['password'][0]:'';
+                          }else if(isset($errors['fb_id'][0])){
+                            $errors = isset($errors['fb_id'][0])?$errors['fb_id'][0]:'';
+                          }else if(isset($errors['device_type'][0])){
+                            $errors = isset($errors['device_type'][0])?$errors['device_type'][0]:'';
+                          }else if(isset($errors['device_token'][0])){
+                            $errors = isset($errors['device_token'][0])?$errors['device_token'][0]:'';
+                          }else{
+                            $errors = 'Something went wrong';
                           }
+                          
                           $response = [
                                           'status' => '0',
                                           'message' => $errors,
-                                          'data' =>  array(),
+                                          'data' =>  (object)array(),
                                       ];	
                     }
                     else if($model->validate())
@@ -74,6 +104,41 @@ class UserController extends ActiveController
 
                                   $newuser = User::find()->where(['customer_id' => $customer_id])->asArray()->one();
                                   $newuser['password_reset_token'] = '';
+                                  $newuser['city'] = (isset($newuser['city']) && $newuser['city'] != '')?$newuser['city']:'';
+                                  $newuser['state'] = (isset($newuser['state']) && $newuser['state'] != '')?$newuser['state']:'';
+                                  $newuser['state_id'] = $newuser['state'];
+                                  if((isset($newuser['state']) && $newuser['state'] != '')){
+                                    $statemodal = State::findOne(['id' => $newuser['state']]);
+                                    if($statemodal){
+                                      $name = $statemodal->name;
+                                    }else{
+                                      $name = '';
+                                    }
+                                    $newuser['state_name'] = $name;
+                                  }else{
+                                    $newuser['state_name'] = '';
+                                  }
+
+                                  if((isset($newuser['country_id']) && $newuser['country_id'] != '')){
+                                    $country = Country::findOne(['country_id' => $newuser['country_id']]);
+                                    if($country){
+                                      $name = $country->name;
+                                    }else{
+                                      $name = '';
+                                    }
+                                    $newuser['country_name'] = $name;
+                                  }else{
+                                    $newuser['country_name'] = '';
+                                  }
+                                  if($newuser['image'] != ''){
+                                        $newuser['image'] = Yii::$app->params['uploadURL'] . 'customer/' .$newuser['image'];
+                                  }
+                                  $is_referral = CustomerReferral::find()->where(['customer_id' => $customer_id])->count();
+                                  if($is_referral){
+                                    $newuser['is_referred'] = "1";  
+                                  }else{
+                                    $newuser['is_referred'] = "0";
+                                  }
                                   $response = [
                                                 'status' => '1',
                                                 'message' => 'Registered successfully!',
@@ -85,7 +150,7 @@ class UserController extends ActiveController
                             $response = [
                                           'status' => 'error',
                                           'message' => 'Registration failed!',
-                                          'data' =>  array(),
+                                          'data' =>  (object)array(),
                                         ];
                         }
                     }
@@ -95,7 +160,7 @@ class UserController extends ActiveController
                         $response = [
                                       'status' => 'error',
                                       'message' => $errors,
-                                      'data' =>  array(),
+                                      'data' =>  (object)array(),
                                   ];	
                     }	
                 }
@@ -104,7 +169,7 @@ class UserController extends ActiveController
                     $response = [
                                   'status' => 'error',
                                   'message' => 'Blank data given!',
-                                  'data' =>  array(),
+                                  'data' =>  (object)array(),
                                 ];
                 }
 
@@ -115,7 +180,7 @@ class UserController extends ActiveController
                 $response = [
                               'status' => 'error',
                               'message' => $response->getMessage(),
-                              'data' =>  array(),
+                              'data' =>  (object)array(),
                             ];
 
                 echo json_encode($response,TRUE);
@@ -141,14 +206,14 @@ class UserController extends ActiveController
                        $response = [
                                           'status' => 'success',
                                           'message' => 'Login valid',
-                                          'data' =>  array(),
+                                          'data' =>  (object)array(),
                             ];
                 }else{
                         $response = [
                             'status' => 'error',
                             'auth_failed' => '1',
                             'message' => 'Invalid Login. Please login again!',
-                            'data' =>  array(),
+                            'data' =>  (object)array(),
                           ];
                     }
            
@@ -166,7 +231,7 @@ class UserController extends ActiveController
             $response = [
               'status' => 'error',
               'message' => $response->getMessage(),
-              'data' =>  array(),
+              'data' =>  (object)array(),
             ];
             
             echo json_encode($response,TRUE);
@@ -179,436 +244,164 @@ class UserController extends ActiveController
         
 	public function actionUpdateprofile()
 	{
+             try
+             {
+                $response = [];
 
-    // print_r(Yii::$app->params['site_url']);die;
-            try
-            {
-            $response = [];
-            $headers = Yii::$app->request->headers;
-            $user_id = $headers->get('user_id', '0');
-            $token = $headers->get('token','0');
-            $data = Yii::$app->request->post();
-            
-            //$filename = $_FILES['photo']['name'];
-            
-            $myfile = fopen(Yii::$app->params['uploadPath']."/log/ws_log.log", "a") or die("Unable to open file!");       
-            $txt = date('Y-m-d H:i:s')." | ".$_SERVER['REMOTE_ADDR']." Input UpdateProfile WS: ".json_encode($data);
-            fwrite($myfile, "\n". $txt);
-            fclose($myfile);
-            
-           	if(sizeof($data) && $user_id > 0){
+                $data = Yii::$app->request->post();
+                // $data = Yii::$app->request->getRawBody();
+                // $data = json_encode($data);
 
-           		extract($data);
-                 	
-              $model = UserUpdate::findByID($user_id);
-              $model->attributes=Yii::$app->request->post();
-              $model->email = $model->email;
-              $model->user_id = $user_id;
-              $data['user_id'] = $user_id;
-              $old_data = $model->findByID($user_id);
-              $oldFile = $model->photo;
-              $model->validate();
-              
-              if(isset($data['phone']))
-              {
-                      $states = $model->checkPhone($data);
-              }
-              else
-              {
-                      $states = 0;
-              }
-                                
-             	if (!$model->validate() || $states){
+                $customer_id = isset($data['customer_id']) ? $data['customer_id'] : '';
 
-                  $errors = $model->errors;
-                    if(isset($errors['name'][0])){
-                          $errors = isset($errors['name'][0])?$errors['name'][0]:'';
-                    }else if(isset($errors['email'][0])){
-                          $errors = isset($errors['email'][0])?$errors['email'][0]:'';
-                    }else if(isset($errors['phone'][0])){
-                          $errors = isset($errors['phone'][0])?$errors['phone'][0]:'';
-                    }
-                    else if($states){
-                          $errors = 'Phone number is already taken.';
-                    }
+                $model = User::findOne(['customer_id' => $customer_id]);
+                if($model){
+                  $oldFile = $model->image;
+                  $model->setScenario('customerupdate');
+                  if($data)
+                  {
+                    $model->name= (isset($data['name']) && $data['name'] != '') ? $data['name'] : $model->name;
+                    $model->email = (isset($data['email']) && $data['email'] != '') ? $data['email'] : $model->email;
+                    $model->country_id = (isset($data['country_id']) && $data['country_id'] != '') ? $data['country_id'] : $model->country_id;
+                    $model->state = $state = (isset($data['state']) && $data['state'] != '') ? $data['state'] :(isset($data['state_id']) ? $data['state_id']: $model->state );
+                    $model->city = $city = (isset($data['city']) && $data['city'] != '') ? $data['city'] : $model->city;
 
-                  $response = [
-                      'status' => 'error',
-                      'message' => $errors,
-                      'data' =>  array(),
-                  ];	
-        		}else if(User::checkAuthenticate($user_id,$token)){
-
-                    $user = Login::findByIDWithLanguage($user_id);
                     
-                    if(sizeof($user))
-                    { 
-                        if(isset($data['phone']))
+                        if (!$model->validate()){
+                              $errors = $model->errors;
+                              if(isset($errors['name'][0])){
+                                $errors = isset($errors['name'][0])?$errors['name'][0]:'';
+                              }else if(isset($errors['email'][0])){
+                                $errors = isset($errors['email'][0])?$errors['email'][0]:'';
+                              }else if(isset($errors['password'][0])){
+                                $errors = isset($errors['password'][0])?$errors['password'][0]:'';
+                              }else if(isset($errors['fb_id'][0])){
+                                $errors = isset($errors['fb_id'][0])?$errors['fb_id'][0]:'';
+                              }else if(isset($errors['device_type'][0])){
+                                $errors = isset($errors['device_type'][0])?$errors['device_type'][0]:'';
+                              }else if(isset($errors['device_token'][0])){
+                                $errors = isset($errors['device_token'][0])?$errors['device_token'][0]:'';
+                              }else{
+                                $errors = 'Something went wrong';
+                              }
+                              
+                              $response = [
+                                              'status' => '0',
+                                              'message' => $errors,
+                                              'data' =>  (object)array(),
+                                          ];  
+                        }
+                        else if($model->validate())
                         {
-                  					$user_old = User::findByID($user_id);
-                  					$old_phone = $user_old->phone;
-                        } 
-		    
-         		            if($model->save(false))
-                        {
-                            if(sizeof($_FILES)> 0 && $_FILES['photo']['error'] == 0)
+                            $model->save(false);
+
+                            if(sizeof($_FILES)> 0 && $_FILES['image']['error'] == 0)
                             {                     
                                 $oldFiles = Yii::$app->params['uploadPath'].''.$oldFile;
                                 if(!empty($oldFile) && file_exists($oldFile)) 
                                 { 
                                     unlink($oldFiles);
                                 }
-                                $fn = $model->photo = time().'_'.$_FILES['photo']['name']; 
-                                move_uploaded_file($_FILES['photo']['tmp_name'],Yii::$app->params['uploadPath'].''.$model->photo);
+                                $fn = $model->image = time().'_'.$_FILES['image']['name']; 
+                                move_uploaded_file($_FILES['image']['tmp_name'],Yii::$app->params['uploadPath'] . 'customer/' .$model->image);
                                 $model->save(false);
-                            }     
+                            }  
 
-                            $user = Login::findByIDWithLanguage($user_id);
 
-                            $photo = $user['photo'];
-                             if($photo != ''){
-                              $user['photo'] = Yii::$app->params['site_url'].'uploaded_file/'.$photo;
+                            if($customer_id){
+                                      $newuser = User::find()->where(['customer_id' => $customer_id])->asArray()->one();
+                                      $newuser['city'] = (isset($newuser['city']) && $newuser['city'] != '')?$newuser['city']:'';
+                                      $newuser['state'] = (isset($newuser['state']) && $newuser['state'] != '')?$newuser['state']:'';
+                                      $newuser['state_id'] = $newuser['state'];
+                                      if((isset($newuser['state']) && $newuser['state'] != '')){
+                                        $statemodal = State::findOne(['id' => $newuser['state']]);
+                                        if($statemodal){
+                                          $name = $statemodal->name;
+                                        }else{
+                                          $name = '';
+                                        }
+                                        $newuser['state_name'] = $name;
+                                      }else{
+                                        $newuser['state_name'] = '';
+                                      }
+
+                                      if((isset($newuser['country_id']) && $newuser['country_id'] != '')){
+                                        $country = Country::findOne(['country_id' => $newuser['country_id']]);
+                                        if($country){
+                                          $name = $country->name;
+                                        }else{
+                                          $name = '';
+                                        }
+                                        $newuser['country_name'] = $name;
+                                      }else{
+                                        $newuser['country_name'] = '';
+                                      }
+                                      if($newuser['image'] != ''){
+                                        $newuser['image'] = Yii::$app->params['uploadURL'] . 'customer/' .$newuser['image'];
+                                      }
+                                      
+                                      $is_referral = CustomerReferral::find()->where(['customer_id' => $customer_id])->count();
+                                      if($is_referral){
+                                        $newuser['is_referred'] = "1";  
+                                      }else{
+                                        $newuser['is_referred'] = "0";
+                                      }
+
+                                      $response = [
+                                                    'status' => '1',
+                                                    'message' => 'Profile updated successfully!',
+                                                    'data' => $newuser
+                                      ];
+
                             }
-
-
-                            $user['token'] = $token;
-
-                            $response = [
-                                          'status' => 'success',
-                                          'message' => 'Profile updated successfully',
-                                          'data' => $user
-                            ];
-
-
-            	          		/*$response = [
-            			              'status' => 'success',
-            			              'message' => 'Profile updated successfully! ',
-            			              'data' => [
-            			                   	  'user_id' => (string)$user->user_id,
-            				                  'name' => (string)$user->name,
-            				                  'phone' => (string)$user->phone,
-                                      'email' => (string)$user->email,
-                                      'photo' => (string)$photo,
-            				                  'status' => (string)$user->status,
-            				                  'device' => (string)$user->device,
-            				                  'device_token' => (string)$user->device_token,
-            				                  'token' => (string)$token
-                                                            ]
-            			            ];*/
-         		            }
+                            else{
+                                $response = [
+                                              'status' => '0',
+                                              'message' => 'Edit Profile failed!',
+                                              'data' =>  (object)array(),
+                                            ];
+                            }
+                        }
                         else
                         {
-                     			$response = [
-            			            'status' => 'error',
-            			            'message' => 'Something went wrong!',
-            			            'data' =>  array(),
-            			          ];
-                     		}
-                    }
-                    else
-                    {
-                                $response = [
-                    		            'status' => 'error',
-                    		            'message' => 'User not Found!',
-                    		            'data' =>  array(),
-                    		          ];
-                    }
-         	}else{
-                 		$response = [
-        		            'status' => 'error',
-                        'auth_failed' => '1',
-        		            'message' => 'Invalid Login. Please login again!',
-        		            'data' =>  array(),
-        		          ];
-         	      }
-
-   	}
-        else
-        {
-         		$response = [
-      	            'status' => 'error',
-      	            'message' => 'Blank data given!',
-      	            'data' =>  array(),
-	          ];
-      	}
-        
-	    $myfile = fopen(Yii::$app->params['uploadPath']."/log/ws_log.log", "a") or die("Unable to open file!");       
-            $txt = date('Y-m-d H:i:s')." | ".$_SERVER['REMOTE_ADDR']." Output UpdateProfile WS: ".json_encode($response);
-            fwrite($myfile, "\n". $txt);
-            fclose($myfile);
-	    echo json_encode($response,TRUE);
-        }
-        catch (ErrorException $response)
-        {
-            $response = [
-	            'status' => 'error',
-	            'message' => $response->getMessage(),
-	            'data' =>  array(),
-	          ];
-            
-	    echo json_encode($response,TRUE);
-        }
-	}
-  
-
-
-
-  public function actionUpdateprofiles()
-  {
-            try
-            {
-            $response = [];
-            $headers = Yii::$app->request->headers;
-            $user_id = $headers->get('user_id', '0');
-            $token = $headers->get('token','0');
-            $data = Yii::$app->request->post();
-           
-            //$filename = $_FILES['photo']['name'];
-            
-            $myfile = fopen(Yii::$app->params['uploadPath']."/log/ws_log.log", "a") or die("Unable to open file!");       
-            $txt = date('Y-m-d H:i:s')." | ".$_SERVER['REMOTE_ADDR']." Input UpdateProfile WS: ".json_encode($data);
-            fwrite($myfile, "\n". $txt);
-            fclose($myfile);
-            
-     if(sizeof($data) && $user_id > 0){
-          extract($data);
-          
-          $model = UserUpdate::findByID($user_id);
-          $model->attributes=Yii::$app->request->post();
-          $model->email = $model->email;
-          $model->user_id = $user_id;
-          $data['user_id'] = $user_id;
-          $old_data = $model->findByID($user_id);
-          $oldFile = $model->photo;
-          $model->validate();
-          if(isset($data['phone']))
-          {
-                  $states = $model->checkPhone($data);
-          }
-          else
-          {
-                  $states = 0;
-          }
-                  
-          if (!$model->validate() || $states)
-          {
-                        $errors = $model->errors;
-                          if(isset($errors['name'][0])){
-                                $errors = isset($errors['name'][0])?$errors['name'][0]:'';
-                          }else if(isset($errors['email'][0])){
-                                $errors = isset($errors['email'][0])?$errors['email'][0]:'';
-                          }else if(isset($errors['phone'][0])){
-                                $errors = isset($errors['phone'][0])?$errors['phone'][0]:'';
-                          }
-                          else if($states){
-                                $errors = 'Phone number is already taken.';
-                          }
-
-                        $response = [
-                            'status' => 'error',
-                            'message' => $errors,
-                            'data' =>  array(),
-                        ];  
-        }
-        else if(User::checkAuthenticate($user_id,$token))
-               {
-                    $user = User::findByID($user_id);
-                    if(sizeof($user))
-                    {      
-                        if(isset($data['phone']))
-                        {
-                            $user_old = User::findByID($user_id);
-                            $old_phone = $user_old->phone;
+                            $errors = $model->errors;
+                            $response = [
+                                          'status' => '0',
+                                          'message' => $errors,
+                                          'data' =>  (object)array(),
+                                      ];  
                         } 
-        
-                        if($model->save(false))
-                        {
-                           
-                            if(isset($photo) && $photo != '')
-                            {   
-
-                                $photo = base64_decode($photo);
-                                $oldFiles = Yii::$app->params['uploadPath'].''.$oldFile;
-                                if(!empty($oldFile) && file_exists($oldFile)) 
-                                { 
-                                    unlink($oldFiles);
-                                }
-                                $fn = $model->photo = time().'.jpg'; 
-                                
-                                file_put_contents(Yii::$app->params['uploadPath'].$model->photo, $photo);
-
-                                // move_uploaded_file($_FILES['photo']['tmp_name'],'/var/www/html/hoi/uploaded_file/'.$model->photo);
-                                $model->save(false);
-                            }     
-    
-
-
-                            $user = Login::findByIDWithLanguage($user_id);
-
-                            $photo = $user['photo'];
-                             if($photo != ''){
-                              $user['photo'] = Yii::$app->params['site_url'].'uploaded_file/'.$photo;
-                            }
-
-
-                            $user['token'] = $token;
-
-                            $response = [
-                                          'status' => 'success',
-                                          'message' => 'Profile updated successfully',
-                                          'data' => $user
+                  }
+                  else
+                  {
+                      $response = [
+                                    'status' => '0',
+                                    'message' => 'Blank data given!',
+                                    'data' =>  (object)array(),
+                                  ];
+                  }  
+                }else{
+                  $response = [
+                              'status' => '0',
+                              'message' => 'User not found',
+                              'data' =>  (object)array(),
+                            ];
+                }
+                echo json_encode($response,TRUE);
+              }
+              catch (ErrorException $response)
+              {
+                $response = [
+                              'status' => '0',
+                              'message' => $response->getMessage(),
+                              'data' =>  (object)array(),
                             ];
 
-
- 
-            }
-                        else
-                        {
-              $response = [
-                  'status' => 'error',
-                  'message' => 'Something went wrong!',
-                  'data' =>  array(),
-                ];
-            }
-                    }
-                    else
-                    {
-                        $response = [
-                'status' => 'error',
-                'auth_failed' => '1',
-                'message' => 'Invalid Login. Please login again!',
-                'data' =>  array(),
-              ];
-                    }
-          }
-                else
-                {
-            $response = [
-                'status' => 'error',
-                'auth_failed' => '1',
-                'message' => 'Invalid Login. Please login again!',
-                'data' =>  array(),
-              ];
-        // not authenticated
-          }
-
-    }
-        else
-        {
-      $response = [
-              'status' => 'error',
-              'message' => 'Blank data given!',
-              'data' =>  array(),
-            ];
-    }
-        
-      $myfile = fopen(Yii::$app->params['uploadPath']."/log/ws_log.log", "a") or die("Unable to open file!");       
-            $txt = date('Y-m-d H:i:s')." | ".$_SERVER['REMOTE_ADDR']." Output UpdateProfile WS: ".json_encode($response);
-            fwrite($myfile, "\n". $txt);
-            fclose($myfile);
-      echo json_encode($response,TRUE);
-        }
-        catch (ErrorException $response)
-        {
-            $response = [
-              'status' => 'error',
-              'message' => $response->getMessage(),
-              'data' =>  array(),
-            ];
-            
-      echo json_encode($response,TRUE);
-        }
+                echo json_encode($response,TRUE);
+              }
   }
-        
-        
-  public function actionGetprofile()
-  {
-            try
-            {
-            $response =  array();
-            $headers = Yii::$app->request->headers;
-            $token = $headers->get('token','0');
-            $data = Yii::$app->request->post();
-            $user_id = $headers['user_id'];
 
-            $myfile = fopen(Yii::$app->params['uploadPath']."/log/ws_log.log", "a") or die("Unable to open file!");       
-            $txt = date('Y-m-d H:i:s')." | ".$_SERVER['REMOTE_ADDR']." Input Getprofile WS: ".json_encode($data);
-            fwrite($myfile, "\n". $txt);
-            fclose($myfile);
-            
-      if(isset($user_id) && $user_id != '' && isset($token) && $token != '')
-        {
-            
-            if(User::checkAuthenticate($user_id,$token) )
-            {
-                $user = Login::findByIDWithLanguage($user_id);
-                if($user)
-                {
-                        $photo = $user['photo'];
-                        if($photo != ''){
-                          $user['photo'] = Yii::$app->params['site_url'].'uploaded_file/'.$photo;
-                        }
-                        $user['token'] = $token;
 
-                        if($user)
-                        {
-                              $response = [
-                                  'status' => 'success',
-                                  'message' => 'User Details',
-                                  'data' => $user
-                                ];
-                        }
-                        else
-                        {
-                                $response = [
-                                    'status' => 'error',
-                                    'auth_failed' => '1',
-                                    'message' => 'Invalid Login. Please login again!',
-                                    'data' =>  array(),
-                                  ];
-                        }
-            }else{
-                  $response = [
-                          'status' => 'error',
-                          'auth_failed' => '1',
-                          'message' => 'Invalid Login. Please login again!',
-                          'data' =>  array(),
-                        ];
-                }
-            }else{
-                $response = [
-                  'status' => 'error',
-                  'auth_failed' => '1',
-                  'message' => 'Invalid Login. Please login again!',
-                  'data' =>  array(),
-                ];
-            }
-        }else{
-
-            $response = [
-              'status' => 'error',
-              'message' => 'Invalid input!',
-              'data' =>  array(),
-            ];
-      }
-        
-          $myfile = fopen(Yii::$app->params['uploadPath']."/log/ws_log.log", "a") or die("Unable to open file!");       
-          $txt = date('Y-m-d H:i:s')." | ".$_SERVER['REMOTE_ADDR']." Output Getprofile WS: ".json_encode($response);
-          fwrite($myfile, "\n". $txt);
-          fclose($myfile);
-          echo json_encode($response,TRUE);
-        }
-        catch (ErrorException $response)
-        {
-            $response = [
-                    'status' => 'error',
-                    'message' => $response->getMessage(),
-                    'data' =>  array(),
-                  ];
-
-            echo json_encode($response,TRUE);
-        }
-  }
       
   public function actionCitylist()
   {
@@ -665,7 +458,7 @@ class UserController extends ActiveController
                             $response = [
                                 'status' => 'error',
                                 'message' => 'No City Found',
-                                'data' =>  array(),
+                                'data' =>  (object)array(),
                               ];
                     }
 
@@ -680,7 +473,7 @@ class UserController extends ActiveController
                 $response = [
                         'status' => 'error',
                         'message' => $response->getMessage(),
-                        'data' =>  array(),
+                        'data' =>  (object)array(),
                       ];
 
                 echo json_encode($response,TRUE);
@@ -706,7 +499,7 @@ class UserController extends ActiveController
                         $response = [
                             'status' => 'error',
                             'message' => 'No Language Found',
-                            'data' =>  array(),
+                            'data' =>  (object)array(),
                           ];
                 }
                 echo json_encode($response,TRUE);
@@ -716,7 +509,7 @@ class UserController extends ActiveController
             $response = [
                     'status' => 'error',
                     'message' => $response->getMessage(),
-                    'data' =>  array(),
+                    'data' =>  (object)array(),
                   ];
 
             echo json_encode($response,TRUE);
@@ -774,7 +567,7 @@ class UserController extends ActiveController
                     $response = [
                                 'status' => 'error',
                                 'message' => 'Tour not found!',
-                                'data' =>  array(),
+                                'data' =>  (object)array(),
                               ];
                 }
                 
@@ -790,7 +583,7 @@ class UserController extends ActiveController
             $response = [
                     'status' => 'error',
                     'message' => $response->getMessage(),
-                    'data' =>  array(),
+                    'data' =>  (object)array(),
                   ];
 
             echo json_encode($response,TRUE);
@@ -840,7 +633,7 @@ class UserController extends ActiveController
                                           $response = [
                                               'status' => 'error',
                                               'message' => $errors,
-                                              'data' =>  array(),
+                                              'data' =>  (object)array(),
                                             ];	
                       		            }
                                	      else if(isset($old_password) && $old_password != '' ){
@@ -880,7 +673,7 @@ class UserController extends ActiveController
                                                           $response = [
                                                               'status' => 'error',
                                                               'message' => 'New password cannot be same as old password!.',
-                                                              'data' =>  array(),
+                                                              'data' =>  (object)array(),
                                                             ];
                                                   }
                                               }
@@ -889,7 +682,7 @@ class UserController extends ActiveController
                                                       $response = [
                                                           'status' => 'error',
                                                           'message' => 'Old Password is invalid!',
-                                                          'data' =>  array(),
+                                                          'data' =>  (object)array(),
                                                         ];
                                               }
                                       }
@@ -898,7 +691,7 @@ class UserController extends ActiveController
                                               $response = [
                                                   'status' => 'error',
                                                   'message' => 'Password must not be blank!',
-                                                  'data' =>  array(),
+                                                  'data' =>  (object)array(),
                                                 ];
                                       }
                                	
@@ -906,7 +699,7 @@ class UserController extends ActiveController
                              		$response = [
                           	            'status' => 'error',
                           	            'message' => 'Blank data given!',
-                          	            'data' =>  array(),
+                          	            'data' =>  (object)array(),
                           	          ];
                              	}
 
@@ -915,7 +708,7 @@ class UserController extends ActiveController
                                       'status' => 'error',
                                       'auth_failed' => '1',
                                       'message' => 'Invalid login! Please login again!',
-                                      'data' =>  array(),
+                                      'data' =>  (object)array(),
                                     ];
                           }
                      	
@@ -930,7 +723,7 @@ class UserController extends ActiveController
                       $response = [
           	            'status' => 'error',
           	            'message' => $response->getMessage(),
-          	            'data' =>  array(),
+          	            'data' =>  (object)array(),
           	          ];
                       
           	           echo json_encode($response,TRUE);
@@ -965,7 +758,7 @@ class UserController extends ActiveController
                                     $response = [
                                         'status' => 'success',
                                         'message' => 'You are  logged out!',
-                                        'data' =>  array(),
+                                        'data' =>  (object)array(),
                                       ];
                             }
                             else
@@ -973,7 +766,7 @@ class UserController extends ActiveController
                                     $response = [
                                         'status' => 'error',
                                         'message' => 'This user does not exist!',
-                                        'data' =>  array(),
+                                        'data' =>  (object)array(),
                                       ];
                             }
             }
@@ -982,7 +775,7 @@ class UserController extends ActiveController
                     $response = [
                         'status' => 'error',
                         'message' => 'Blank data given!',
-                        'data' =>  array(),
+                        'data' =>  (object)array(),
                       ];
             }
     	
@@ -997,7 +790,7 @@ class UserController extends ActiveController
             $response = [
                     'status' => 'error',
                     'message' => $response->getMessage(),
-                    'data' =>  array(),
+                    'data' =>  (object)array(),
                   ];
 
             echo json_encode($response,TRUE);

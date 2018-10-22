@@ -3,6 +3,7 @@ namespace backend\controllers;
 
 use Yii;
 use backend\models\LoginForm;
+use backend\models\ResetForm;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -54,7 +55,7 @@ class LoginController extends Controller
             $data = $user_model->findByEmail($email);
 
             if(sizeof($data)){
-                $user_model->update_status('A',$data['user_id']);
+                $user_model->update_status('A',$data['customer_id']);
                 print_r('<center><h1>Email verified successfully!</h1></center>');                
             }else{
                 print_r('<center><h1>User is not existing!</h1></center>');   
@@ -100,7 +101,7 @@ class LoginController extends Controller
 //        echo $id;exit;
         
 //        $model = PolyUser::findOne($id)->asArray()->one();
-       $model= PolyUser::find()->where(['user_id' => $id])->asArray()->one();
+       $model= PolyUser::find()->where(['customer_id' => $id])->asArray()->one();
        echo json_encode($model);
 
     }
@@ -194,7 +195,7 @@ class LoginController extends Controller
             return Yii::$app->getResponse()->redirect(array('/login/index'));
         }
         
-        $user_id = $model['user_id'];
+        $customer_id = $model['customer_id'];
         if ($model->load(Yii::$app->request->post()) && $model->validate()) 
         {  
        

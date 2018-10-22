@@ -5,6 +5,8 @@ namespace backend\controllers;
 use Yii;
 use backend\models\Category;
 use backend\models\CategorySearch;
+use backend\models\Customer;
+use backend\models\Posts;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -91,6 +93,22 @@ class CategoryController extends Controller
               ]);
             }
             $model->save(false);
+
+            $cat_id = $model->category_id;
+            $customerData  =  Customer::find()->asArray()->all();
+            foreach ($customerData as $key => $value) {
+              $device_type = $value['device_type'];
+              $device_token = $value['device_token'];
+              $title = 'New category added';
+              $param = '';
+              $model = new Posts();
+              if($device_type == '1'){
+                $model->sendAndroidNotification($device_token, $param, $title, 1, $cat_id, '');
+              }else{
+                $model->sendIosNotification($device_token, $param, $title, 1, $cat_id, '');
+              }
+            }
+
             Yii::$app->session->setFlash('success', 'Category Created Successfully');
             return $this->redirect(['index']);        
         } 
@@ -153,7 +171,18 @@ class CategoryController extends Controller
                 unset($model->icon);
             }
             $model->save(false);
-        
+            $cat_id = $model->category_id;
+            $customerData  =  Customer::find()->asArray()->all();
+            foreach ($customerData as $key => $value) {
+              $device_type = $value['device_type'];
+              $device_token = $value['device_token'];
+              if($device_type == '1'){
+                $title = 'New category added';
+                $param = '';
+                $model = new Posts();
+                // $model->sendAndroidNotification($device_token, $param, $title, 1, $cat_id, '');
+              }
+            }
             Yii::$app->session->setFlash('success', 'Category Updated Successfully');
             return $this->redirect(['index']);
         } else {

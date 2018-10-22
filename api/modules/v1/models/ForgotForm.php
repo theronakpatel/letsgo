@@ -32,7 +32,6 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
     public function init()
     {
         parent::init();
-        \Yii::$app->user->enableSession = false;
     }
 
     /**
@@ -40,21 +39,19 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
      */
     public static function tableName()
     {
-        return 'hoi_user';
+        return 'tbl_customer';
     }
 
     
     public static function primaryKey()
     {
-        return ['user_id'];
+        return ['customer_id'];
     }
 
     public function rules()
     {
         return [
             [['email'], 'required'],
-            // [['email'], 'email'],
-            // [['email'], 'exist']    
         ];
     }
  
@@ -107,7 +104,7 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
         // print_r($id);exit();
         $user = self::find()
                 ->where([
-                    "user_id" => $user_id
+                    "customer_id" => $customer_id
                 ])
                 ->one();
 
@@ -120,7 +117,7 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
     public static function findByphone($phone)
     {
         $query = new \yii\db\Query;
-        $query->select(['*'])->from('hoi_user')->where(["phone" => $phone]);
+        $query->select(['*'])->from('tbl_customer')->where(["phone" => $phone]);
         $command = $query->createCommand();
         $data = $command->queryOne(); 
 
@@ -147,22 +144,22 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
      * @param string $email
      * @return static|null
      */
-//    public static function findByemail($user_email)
+//    public static function findByemail($email)
 //    {
-//        return static::findOne(['user_email' => $user_email]);
+//        return static::findOne(['email' => $email]);
 //    }
     public static function findByemail($email)
     {
         $query = new \yii\db\Query;
-        $query->select(['*'])->from('hoi_user')->where(["email" => $email]);
+        $query->select(['*'])->from('tbl_customer')->where(["email" => $email]);
         $command = $query->createCommand();
         $data = $command->queryOne(); 
 
         return $data;
     }
-    public static function findByID($user_id)
+    public static function findByID($customer_id)
     {
-        return static::findOne(['user_id' => $user_id]);
+        return static::findOne(['customer_id' => $customer_id]);
     }
 
     public static function checkEmail($data)
@@ -170,13 +167,13 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
       extract($data);
       $query = new \yii\db\Query;
       $query->select([
-                          'user_id',
+                          'customer_id',
                           ])
-        ->from('hoi_user')
+        ->from('tbl_customer')
         ->where([
-              "user_email" => $user_email
+              "email" => $email
           ])
-        ->andWhere(['!=', 'user_id', $user_id]); 
+        ->andWhere(['!=', 'customer_id', $customer_id]); 
           
       $command = $query->createCommand();
       $data = $command->queryOne(); 
@@ -189,14 +186,14 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
 
     }
 
-    /*public static function findByemail($user_email) {
+    /*public static function findByemail($email) {
  
-        if (!static::isPasswordResetTokenValid($user_email)) {
+        if (!static::isPasswordResetTokenValid($email)) {
             return null;
         }
 
         return static::findOne([
-            'user_email' => $user_email
+            'email' => $email
         ]);
     }*/
 
@@ -298,48 +295,53 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
         return $this->auth_key = Yii::$app->security->generateRandomString();
     }
 
-    public function updatePasswordResetToken($password_reset_token,$user_id)
+    public function updatePasswordResetToken($password_reset_token,$customer_id,$email)
     {
- 
+        $noreplayEmail = Yii::$app->params['noreplayEmail'];
+        Yii::$app->db->createCommand('UPDATE tbl_customer SET password_reset_token = \''.$password_reset_token.'\' WHERE customer_id=\''.$customer_id.'\' AND email=\''.$email.'\'')->execute();
+        
+        $data = self::find()
+                ->where([
+                    "customer_id" => $customer_id
+                ])
+                ->asArray()->one();
 
-        Yii::$app->db->createCommand('UPDATE hoi_user SET password_reset_token = \''.$password_reset_token.'\' WHERE user_id=\''.$user_id.'\'')->execute();
         Yii::$app
             ->mailer
             ->compose(
               ['html' => 'passwordResetToken-html'],
-                ['password_reset_token' => $password_reset_token]
+              ['name' => $data['name'],'password_reset_token' => $password_reset_token,]
             )
-            ->setFrom(['priyanka.sah@ecosmob.com'])
-            ->setTo('priyanka.sah@ecosmob.com')
-            ->setSubject('Password reset for ' . Yii::$app->name)
+            ->setFrom($noreplayEmail)
+            ->setTo($email)
+            ->setSubject('Password reset request')
             ->send();
-            
 
         return TRUE;
 
     }
-    public function updateAuthKey($auth_key,$user_id)
+    public function updateAuthKey($auth_key,$customer_id)
     {
-        Yii::$app->db->createCommand('UPDATE hoi_user SET auth_key = \''.$auth_key.'\' WHERE user_id=\''.$user_id.'\'')->execute();
+        Yii::$app->db->createCommand('UPDATE tbl_customer SET auth_key = \''.$auth_key.'\' WHERE customer_id=\''.$customer_id.'\'')->execute();
         return TRUE;
 
     }
-    public function updatePassHash($password_hash,$user_id)
+    public function updatePassHash($password_hash,$customer_id)
     {
-        Yii::$app->db->createCommand('UPDATE hoi_user SET password_hash = \''.$password_hash.'\' WHERE user_id=\''.$user_id.'\'')->execute();
+        Yii::$app->db->createCommand('UPDATE tbl_customer SET password_hash = \''.$password_hash.'\' WHERE customer_id=\''.$customer_id.'\'')->execute();
         return TRUE;
 
     }
-    public function updatePoints($user_credit,$user_id)
+    public function updatePoints($user_credit,$customer_id)
     {
-        Yii::$app->db->createCommand("UPDATE `hoi_user` SET user_credit = user_credit + '$user_credit' WHERE user_id = '$user_id'")->execute();
+        Yii::$app->db->createCommand("UPDATE `tbl_customer` SET user_credit = user_credit + '$user_credit' WHERE customer_id = '$customer_id'")->execute();
         return TRUE;
 
     }
     
-    public function reducePoint($user_credit,$user_id)
+    public function reducePoint($user_credit,$customer_id)
     {
-        Yii::$app->db->createCommand("UPDATE `hoi_user` SET user_credit = user_credit - '$user_credit' WHERE user_id = '$user_id'")->execute();
+        Yii::$app->db->createCommand("UPDATE `tbl_customer` SET user_credit = user_credit - '$user_credit' WHERE customer_id = '$customer_id'")->execute();
         return TRUE;
 
     }
@@ -349,12 +351,12 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
         extract($data);
 
         Yii::$app->db->createCommand()
-             ->update('hoi_user', [
+             ->update('tbl_customer', [
                                     'user_firstname' => $user_firstname,
                                     'user_lastname' => $user_lastname,
-                                    'user_email' => $user_email,
+                                    'email' => $email,
                                     'user_phone' => $user_phone
-                                  ],['user_id' => $user_id])
+                                  ],['customer_id' => $customer_id])
              ->execute();
 
         return TRUE;
@@ -366,9 +368,9 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
         $user_password = isset($user_password)?md5($user_password):'';
         if($user_password != ''){
           Yii::$app->db->createCommand()
-             ->update('hoi_user', [
+             ->update('tbl_customer', [
                                     'user_password' => $user_password,
-                                  ],['user_id' => $user_id])
+                                  ],['customer_id' => $customer_id])
              ->execute();
         }
 
@@ -381,9 +383,9 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
         $user_buyingrate = isset($user_buyingrate)?trim($user_buyingrate):'';
         if($user_buyingrate != ''){
           Yii::$app->db->createCommand()
-             ->update('hoi_user', [
+             ->update('tbl_customer', [
                                     'user_buyingrate' => $user_buyingrate,
-                                  ],['user_id' => $user_id])
+                                  ],['customer_id' => $customer_id])
              ->execute();
         }
 
@@ -398,7 +400,7 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
         $password = isset($password)?md5($password):'';
         $date = date('Y-m-d H:i:s');
 
-        Yii::$app->db->createCommand("INSERT INTO `hoi_user` "
+        Yii::$app->db->createCommand("INSERT INTO `tbl_customer` "
                 . "( `name`,`email`, `phone`, `password`, `auth_key`, `status`,`created_date`) VALUES "
                 . "('$name', '$email', '$phone', '$password', '$auth_key','$date')")->execute();
 
@@ -414,7 +416,7 @@ class ForgotForm extends ActiveRecord implements IdentityInterface
     public function addTransaction($data)
     {
         extract($data);
-        $ctransaction_userid = isset($user_id)?$user_id:'';
+        $ctransaction_userid = isset($customer_id)?$customer_id:'';
         $ctransaction_paypalid = isset($ctransaction_paypalid)?$ctransaction_paypalid:'';
         $ctransaction_amount = isset($ctransaction_amount)?$ctransaction_amount:'0';
         $ctransaction_status = isset($ctransaction_status)?$ctransaction_status:'failed';
@@ -436,7 +438,7 @@ public function addUsageTransaction($data)
     {
         extract($data);
         
-        $utransaction_userid = isset($user_id)?$user_id:'';
+        $utransaction_userid = isset($customer_id)?$customer_id:'';
         $utransaction_wifiid = isset($utransaction_wifiid)?$utransaction_wifiid:'';
         $utransaction_start_time = isset($utransaction_start_time)?$utransaction_start_time:'0';
         $utransaction_end_time = isset($utransaction_end_time)?$utransaction_end_time:'0';
@@ -459,7 +461,7 @@ public function addUsageTransaction($data)
 
 
 
-    public static function getTransactionHistory($user_id) {
+    public static function getTransactionHistory($customer_id) {
 
       $query = new \yii\db\Query;
       $query->select([
@@ -471,12 +473,12 @@ public function addUsageTransaction($data)
                      ])
         ->from('tbl_credittransaction')
         ->where([
-              "ctransaction_userid" => $user_id
+              "ctransaction_userid" => $customer_id
           ])
         ->orderBy(["ctransaction_datetime"=> SORT_DESC]) ; 
           
       $command = $query->createCommand();
-         // print_r($user_id);exit();
+         // print_r($customer_id);exit();
       $data = $command->queryAll(); 
       
 
@@ -495,6 +497,7 @@ public function addUsageTransaction($data)
 
     public function getPasswordSecurityToken()
     {
+
         return $this->password_reset_token = Yii::$app->security->generateRandomString(). '_' . time();
     }
 
